@@ -7,6 +7,12 @@ username = ""
 password = ""
 appKey = ""
 
+with open('info.txt', 'r') as file:
+    info = file.readline().split(":")
+    username = info[0]
+    password= info[1]
+    appKey = info[2]
+
 bf = Betfair(username, password, appKey)
 bf.login()
 bf.user_details()

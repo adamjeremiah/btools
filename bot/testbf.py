@@ -3,9 +3,9 @@ import json
 
 
 
-username = "adamjeremiah"
-password = "we1$4b0y"
-appKey = "OCWWOxNeROp7JOvx"
+username = ""
+password = ""
+appKey = ""
 
 bf = Betfair(username, password, appKey)
 bf.login()

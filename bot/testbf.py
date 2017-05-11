@@ -26,3 +26,5 @@ while (i < 10):
     add_prices(m)
     i += 1
 
+
+

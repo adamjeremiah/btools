@@ -6,7 +6,7 @@ class Betfair:
 
     def __init__(self, username, password, appKey):
         self.bf = betfairlightweight.APIClient(username, password, app_key=appKey,
-                                               certs="C:\\Users\\a-d-a\\PycharmProjects\\bettingTool\\bot\\certs")
+                                               certs="bot\certs")
 
     def login(self):
         self.bf.login()
@@ -33,7 +33,7 @@ class Betfair:
         if event_ids is None:
             event_ids = ['7']
         if projections is None:
-            projections = ['RUNNER_DESCRIPTION', 'EVENT', 'MARKET_START_TIME']
+            projections = ['EVENT', 'MARKET_START_TIME', 'RUNNER_DESCRIPTION']
 
         return self.bf.betting.list_market_catalogue(
             filter=filters.market_filter(

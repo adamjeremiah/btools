@@ -1,5 +1,6 @@
-from bot.bf import Betfair
-import json
+import bot.bf
+import pandas
+import _datetime as dt
 
 
 
@@ -7,23 +8,32 @@ username = ""
 password = ""
 appKey = ""
 
-with open('info.txt', 'r') as file:
+with open('../info.txt', 'r') as file:
     info = file.readline().split(":")
     username = info[0]
-    password= info[1]
+    password = info[1]
     appKey = info[2]
 
-bf = Betfair(username, password, appKey)
+
+bf = bot.bf.Betfair(username, password, appKey=appKey)
 bf.login()
-bf.user_details()
 
-bf.get_market_ids()
+#print(bf.get_catalogue()[4].json())
 
-catalogues = list(map(lambda x: list(json.loads(x.json()).values())[:-1], bf.get_catalogue(max_results=100)))
-bf.get_catalogue()[0].json()
-market_ids = list(map(lambda x: x[0], catalogues))
-markets = list(map(lambda x: x.json(), bf.get_markets(market_ids)))
-print(markets)
+print(bf.get_markets(['1.131535438'])[0].json())
+
+
+#bf = Betfair(username, password, appKey)
+#bf.login()
+#bf.user_details()
+
+#bf.get_market_ids()
+
+#catalogues = list(map(lambda x: list(json.loads(x.json()).values())[:-1], bf.get_catalogue(max_results=100)))
+#bf.get_catalogue()[0].json()
+#market_ids = list(map(lambda x: x[0], catalogues))
+#markets = list(map(lambda x: x.json(), bf.get_markets(market_ids)))
+#print(markets)
 #print(catalogues)
 #for c in catalogues:
 #    print(list(json.loads(c.json()).values()))

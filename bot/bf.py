@@ -2,9 +2,6 @@ import betfairlightweight as betfairlightweight
 from betfairlightweight import filters
 
 
-
-
-
 class Betfair:
 
     def __init__(self, username, password, appKey):
@@ -36,14 +33,13 @@ class Betfair:
         if event_ids is None:
             event_ids = ['7']
         if projections is None:
-            projections = ['MARKET_START_TIME']
+            projections = ['RUNNER_DESCRIPTION', 'EVENT', 'MARKET_START_TIME']
 
         return self.bf.betting.list_market_catalogue(
             filter=filters.market_filter(
                 event_type_ids=event_ids,  # filter on just horse racing
                 market_countries=countries,  # filter on just GB countries
-                market_type_codes=types  # filter on just WIN market types
-
+                market_type_codes=types,  # filter on just WIN market types
             ),
             market_projection=projections,
             # runner description required

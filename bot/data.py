@@ -12,7 +12,6 @@ class Race(Model):
     eventId = IntegerField()
     marketName = CharField()
     marketStartTime = DateTimeField()
-    # totalMatched = FloatField() # Don't need as I'll capture this when checking prices
     venue = CharField()
     countryCode = CharField()
 
@@ -20,69 +19,105 @@ class Race(Model):
         database = db
 
 
-class Market(Model):
-    race = ForeignKeyField(Race, related_name="markets")
-    time = DateTimeField()
-    status = CharField()
-    numberOfRunners = IntegerField()
-    lastMatchTime = DateTimeField()
-    totalMatched = FloatField()
-    totalAvailable = FloatField()
-
-    class Meta:
-        database = db
-
-
 class Horse(Model):
     race = ForeignKeyField(Race, related_name="horses")
-    selectionId = IntegerField(primary_key=True)
+    selectionId = IntegerField()
     runnerName = CharField()
 
     class Meta:
         database = db
 
 
-class Price(Model):
-    horse = ForeignKeyField(Horse, related_name="prices")
-    timeStamp = TimeField()
+class Market(Model):
+    horse = ForeignKeyField(Horse, related_name="markets")
+    time = DateTimeField()
+    status = CharField()
     lastPriceTraded = FloatField()
-    totalMatched = FloatField
+    totalMatched = FloatField()
+
+    class Meta:
+        database = db
+
+
+class AvailableToBack(Model):
+    market = ForeignKeyField(Market, related_name="backs")
+    price = FloatField()
+    size = FloatField()
+
+    class Meta:
+        database = db
+
+
+class AvailableToLay(Model):
+    market = ForeignKeyField(Market, related_name="lays")
+    price = FloatField()
+    size = FloatField()
+
+    class Meta:
+        database = db
+
+
+class TradedVolume(Model):
+    market = ForeignKeyField(Market, related_name="volumes")
+    price = FloatField()
+    size = FloatField()
 
     class Meta:
         database = db
 
 
 def add_races(catalogue):
-    for c in catalogue:
-        try:
-            r=Race.create(marketId=c.market_id,
-                        eventId=c.event.id,
-                        marketName=c.market_name,
-                        marketStartTime=c.market_start_time,
-                        countryCode=c.event.country_code,
-                        venue=c.event.venue)
-        except IntegrityError:
-            pass
-
-        for h in c.runners:
+    with db.atomic():
+        for c in catalogue:
             try:
-                Horse.create(race_id=c.market_id,
-                             selectionId=h.selection_id,
-                             runnerName=h.runner_name)
-            except IntegrityError:
+                r = Race(marketId=c.market_id,
+                                eventId=c.event.id,
+                                marketName=c.market_name,
+                                marketStartTime=c.market_start_time + datetime.timedelta(hours=1),
+                                countryCode=c.event.country_code,
+                                venue=c.event.venue)
+                r.save(force_insert=True)
+            except IntegrityError as ie:
+                pass
+            try:
+                for h in c.runners:
+                    rc = Horse(race=r.marketId,
+                               selectionId=h.selection_id,
+                               runnerName=h.runner_name)
+
+                    rc.save(force_insert=True)
+            except IntegrityError as ie:
                 pass
 
+
 def add_prices(marketbook):
-    for m in marketbook:
-        Market.create(race_id=m.market_id,
-                      time=datetime.datetime.now(),
-                      status=m.status,
-                      numberOfRunners=m.number_of_active_runners,
-                      lastMatchTime=m.last_match_time,
-                      totalMatched=m.total_matched,
-                      totalAvailable=m.total_available)
+    time = datetime.datetime.now()
+    with db.atomic():
+        for m in marketbook:
+            for r in m.runners:
+                add = Market(horse=r.selection_id,
+                             time=time,
+                             status=r.status,
+                             lastPriceTraded=r.last_price_traded or 0,
+                             totalMatched=r.total_matched or 0)
+                add.save()
+
+                id = add.id
+                with db.atomic():
+                    for l in r.ex.available_to_back:
+                        AvailableToBack.create(market=id, size=l.size, price=l.price)
+                    for l in r.ex.available_to_back:
+                        AvailableToLay.create(market=id, size=l.size, price=l.price)
+                    for l in r.ex.available_to_back:
+                        TradedVolume.create(market=id, size=l.size, price=l.price)
+
+def get_races(less_than=datetime.timedelta(minutes=60)):
+    now = datetime.datetime.now()
+    return list(map(lambda x: x.marketId, Race.select().where(now < Race.marketStartTime)))
+
+
 
 try:
-    db.create_tables([Race, Horse, Market, Price])
+    db.create_tables([Race, Horse, Market, AvailableToBack, AvailableToLay, TradedVolume])
 except OperationalError:
     print("Tables Already setup")

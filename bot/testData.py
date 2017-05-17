@@ -1,4 +1,4 @@
-from bot.data import *
+from bot.models import *
 
 
 #r = Race(marketName="WIN", marketStartTime="10pm", totalMatched=100.2, venue="Ling")
